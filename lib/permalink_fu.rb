@@ -25,7 +25,7 @@ module PermalinkFu
     end
     
     def random_permalink(seed = nil)
-      Digest::SHA1.hexdigest("#{seed}#{Time.now.to_s.split(//).sort_by {rand}}")
+      rand(36**8).to_s(36)
     end
   end
 
@@ -169,7 +169,11 @@ module PermalinkFu
 
       while ActiveRecord::Base.uncached{self.class.exists?(conditions)}
         suffix = "-#{counter += 1}"
-        conditions[1] = "#{base[0..limit-suffix.size-1]}#{suffix}"
+        conditions[1] = if self.class.permalink_attributes.empty?
+          PermalinkFu.random_permalink
+        else
+          "#{base[0..limit-suffix.size-1]}#{suffix}"
+        end
         send("#{self.class.permalink_field}=", conditions[1])
       end
     end
